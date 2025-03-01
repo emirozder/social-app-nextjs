@@ -59,3 +59,111 @@ export async function getDbUserId() {
 
   return user.id;
 }
+
+export async function getRandomUsers() {
+  try {
+    const userId = await getDbUserId();
+
+    // Get 3 random users excluding the current user and users the current user is already following
+    const randomUsers = await prisma.user.findMany({
+      where: {
+        AND: [
+          {
+            NOT: {
+              id: userId,
+            },
+          },
+          {
+            NOT: {
+              followers: {
+                some: {
+                  followerId: userId,
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        image: true,
+      },
+      take: 3,
+    });
+
+    return randomUsers;
+  } catch (error) {
+    console.log("Error getting random users:", error);
+    return [];
+  }
+}
+
+export async function toggleFollow(targetUserId: string) {
+  try {
+    const userId = await getDbUserId();
+    if (!userId) return;
+    if (userId === targetUserId) throw new Error("You cannot follow yourself");
+
+    const existingFollow = await prisma.follows.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId: userId,
+          followingId: targetUserId,
+        },
+      },
+    });
+
+    if (existingFollow) {
+      // Unfollow
+      await prisma.follows.delete({
+        where: {
+          followerId_followingId: {
+            followerId: userId,
+            followingId: targetUserId,
+          },
+        },
+      });
+
+      return {
+        success: true,
+        message: "User unfollowed successfully",
+        following: false,
+      };
+    } else {
+      // Follow
+      // Transaction allows us to perform multiple operations in a single call. This is useful for operations that depend on each other. For example, when following a user, we need to create a follow record and a notification record.
+      // If one operation fails, the entire transaction is rolled back. This ensures data integrity. If both operations succeed, the transaction is committed.
+      await prisma.$transaction([
+        prisma.follows.create({
+          data: {
+            followerId: userId,
+            followingId: targetUserId,
+          },
+        }),
+        prisma.notification.create({
+          data: {
+            type: "FOLLOW",
+            creatorId: userId, // The user who followed
+            userId: targetUserId, // The user who was followed
+          },
+        }),
+      ]);
+
+      return {
+        success: true,
+        message: "User followed successfully",
+        following: true,
+      };
+    }
+
+    // Revalidate the home page after following/unfollowing a user
+    // revalidatePath("/");
+
+    // return { success: true };
+  } catch (error) {
+    console.log("Error toggling follow:", error);
+    return { success: false, error: "Failed to toggle follow" };
+  }
+}
