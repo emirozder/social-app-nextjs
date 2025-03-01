@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
@@ -52,6 +53,7 @@ export default function RootLayout({
                 </div>
               </main>
             </div>
+            <Toaster richColors />
           </ThemeProvider>
         </body>
       </html>
