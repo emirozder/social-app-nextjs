@@ -29,7 +29,7 @@ async function Sidebar() {
 
             <div className="mt-2">
               <h3 className="font-semibold">{user.name}</h3>
-              <p className="text-sm text-muted-foreground">{user.username}</p>
+              <p className="text-sm text-muted-foreground">@{user.username}</p>
             </div>
           </Link>
 
