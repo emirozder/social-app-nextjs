@@ -19,10 +19,12 @@ export async function syncUser() {
     const dbUser = await prisma.user.create({
       data: {
         clerkId: userId,
-        name: `${user.firstName || ""} ${user.lastName || ""}`,
+        name:
+          user.fullName ?? user.username ?? user.emailAddresses[0].emailAddress,
+        // name: `${user.firstName || ""} ${user.lastName || ""}`,
         username:
           user.username ?? user.emailAddresses[0].emailAddress.split("@")[0],
-        email: user.emailAddresses[0].emailAddress,
+        email: user.emailAddresses[0].emailAddress ?? "email@example.com",
         image: user.imageUrl,
       },
     });
@@ -34,7 +36,8 @@ export async function syncUser() {
 }
 
 export async function getUserByClerkId(clerkId: string) {
-  return prisma.user.findUnique({
+  await syncUser();
+  const dbUser = await prisma.user.findUnique({
     where: {
       clerkId,
     },
@@ -48,11 +51,15 @@ export async function getUserByClerkId(clerkId: string) {
       },
     },
   });
+
+  if (!dbUser) throw new Error("User not found in database");
+
+  return dbUser;
 }
 
 export async function getDbUserId() {
   const { userId: clerkId } = await auth();
-  if (!clerkId) throw new Error("Unauthorized");
+  if (!clerkId) return null;
 
   const user = await getUserByClerkId(clerkId);
   if (!user) throw new Error("User not found");
@@ -63,6 +70,8 @@ export async function getDbUserId() {
 export async function getRandomUsers() {
   try {
     const userId = await getDbUserId();
+
+    if (!userId) return [];
 
     // Get 3 random users excluding the current user and users the current user is already following
     const randomUsers = await prisma.user.findMany({

@@ -14,7 +14,7 @@ async function WhoToFollowSection() {
         <CardTitle>Who to Follow</CardTitle>
       </CardHeader>
       <CardContent>
-        <div>
+        <div className="space-y-4">
           {users.map((user) => (
             <div key={user.id} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
