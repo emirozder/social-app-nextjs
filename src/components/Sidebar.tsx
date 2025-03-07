@@ -62,9 +62,14 @@ async function Sidebar() {
               <LinkIcon className="size-4 mr-2 shrink-0" />
               {user.website ? (
                 <a
-                  href={`${user.website}`}
+                  href={
+                    user.website.startsWith("http")
+                      ? user.website
+                      : `http://${user.website}`
+                  }
                   className="hover:underline truncate"
                   target="_blank"
+                  rel="noopener noreferrer"
                 >
                   {user.website}
                 </a>
