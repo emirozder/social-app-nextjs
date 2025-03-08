@@ -65,7 +65,7 @@ export async function getDbUserId() {
   const user = await getUserByClerkId(clerkId);
   if (!user) throw new Error("User not found");
 
-  // update the user image if it has changed
+  // update the user image if it has changed in Clerk
   try {
     const clerkUser = await currentUser();
     await prisma.user.update({
