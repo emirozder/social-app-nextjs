@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { revalidatePath } from "next/cache";
 
 export async function syncUser() {
   try {
@@ -135,6 +136,9 @@ export async function toggleFollow(targetUserId: string) {
         },
       });
 
+      // Revalidate the home page after unfollowing a user
+      revalidatePath("/");
+
       return {
         success: true,
         message: "User unfollowed successfully",
@@ -160,17 +164,15 @@ export async function toggleFollow(targetUserId: string) {
         }),
       ]);
 
+      // Revalidate the home page after following a user
+      revalidatePath("/");
+
       return {
         success: true,
         message: "User followed successfully",
         following: true,
       };
     }
-
-    // Revalidate the home page after following/unfollowing a user
-    // revalidatePath("/");
-
-    // return { success: true };
   } catch (error) {
     console.log("Error toggling follow:", error);
     return { success: false, error: "Failed to toggle follow" };
