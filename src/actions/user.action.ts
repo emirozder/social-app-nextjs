@@ -65,6 +65,22 @@ export async function getDbUserId() {
   const user = await getUserByClerkId(clerkId);
   if (!user) throw new Error("User not found");
 
+  try {
+    const clerkUser = await currentUser();
+    await prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        image: clerkUser?.imageUrl,
+      },
+    });
+
+    revalidatePath("/");
+  } catch (error) {
+    console.log("Error updating user image:", error);
+  }
+
   return user.id;
 }
 
